@@ -1,9 +1,9 @@
 import RPi.GPIO as GPIO
 
 # Relais-Pins definieren
-pin1 = 16
-pin2 = 18
-pin3 = 22
+pin1 = 12
+pin2 = 16
+pin3 = 24
 pin4 = 32
 
 # GPIO-Modus setzen

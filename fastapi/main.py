@@ -17,6 +17,8 @@ app.add_middleware(
 stop_rover_move = {"left": None, "right": None}
 stop_rover_crane = {"vertical": None, "grabber": None}
 
+rover.init()
+
 async def stop_rover(direction: str):
     """
     Stop the rover after 1 second of inactivity.
@@ -100,3 +102,7 @@ async def crane(move: MoveRequest):
 
     #print(f"Command: {move.direction}, {move.action}")
     return {"message": f"Received {move.direction}, {move.action}"}
+
+@app.get("/api/getSensorData")
+async def getSensorData():
+    return rover.get_sensor_data()
