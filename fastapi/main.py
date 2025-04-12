@@ -1,11 +1,17 @@
 import asyncio
-#from typing import Union
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, BackgroundTasks
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import rover
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(rover.save_sensor_data())
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 origins = ["*"]
 app.add_middleware(
@@ -103,6 +109,17 @@ async def crane(move: MoveRequest):
     #print(f"Command: {move.direction}, {move.action}")
     return {"message": f"Received {move.direction}, {move.action}"}
 
+
 @app.get("/api/getSensorData")
 async def getSensorData():
     return rover.get_sensor_data()
+
+
+@app.get("/api/getListOfLogs")
+async def getListOfLogs():
+    return rover.get_list_of_logs()
+
+
+@app.get("/api/downloadLog")
+async def downloadLog(log: str):
+    return FileResponse(f"logs/{log}", media_type='text/csv', filename=log.split("/")[-1])

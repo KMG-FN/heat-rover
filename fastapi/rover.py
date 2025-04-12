@@ -1,3 +1,6 @@
+import asyncio
+import os
+import random
 import RPi.GPIO as GPIO
 import bme280
 import smbus2
@@ -84,3 +87,29 @@ def get_sensor_data():
     return {"humidity": round(humidity, 1),
             "pressure": round(pressure, 1),
             "temperature": round(ambient_temperature, 1)}
+
+async def save_sensor_data():
+    """
+    Save sensor data to a file.
+    """
+    
+    with open(f"logs/H.E.A.T.-{random.randint(1,1000)}.csv", "a") as f:
+        f.write("time,humidity,pressure,temperature\n")
+
+        while True:
+          data = get_sensor_data()    
+          f.write(f"{random.randint(1,1000)},{data['humidity']},{data['pressure']},{data['temperature']}\n")
+          f.flush()
+          await asyncio.sleep(1)
+
+def get_list_of_logs():
+    """
+    Get list of log files in the logs directory.
+    """
+    
+    logs = []
+    for file in os.listdir("logs"):
+        if file.endswith(".csv"):
+            logs.append(file)
+    
+    return logs

@@ -1,2 +1,4 @@
 adafruit-circuitpython-dht
 fastapi[standard]
+adafruit-circuitpython-gps
+RPi.bme280
