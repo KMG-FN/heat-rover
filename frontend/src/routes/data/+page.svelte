@@ -6,9 +6,11 @@
 	let humidity = $state(0);
 	let pressure = $state(0);
 
+	const API_BASE = import.meta.env.VITE_API_BASE;
+
 	function apiGetSensorData(body) {
 		// call api to move left forward
-		fetch('http://heat.local:8000/api/getSensorData', {
+		fetch(`${API_BASE}/getSensorData`, {
 			method: 'GET'
 		})
 			.then((response) => {
@@ -40,7 +42,7 @@
 
 	let logs = $state([]);
 	function apiGetListOfLogs() {
-		fetch('http://heat.local:8000/api/getListOfLogs', {
+		fetch(`${API_BASE}/getListOfLogs`, {
 			method: 'GET'
 		})
 			.then((response) => {
@@ -52,7 +54,7 @@
 	}
 
 	function apiDownloadLog() {
-		fetch(`http://heat.local:8000/api/downloadLog?log=${selectedLog}`, {
+		fetch(`${API_BASE}/downloadLog?log=${selectedLog}`, {
 			method: 'GET'
 		})
 			.then((response) => {

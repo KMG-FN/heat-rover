@@ -1,12 +1,15 @@
 <script>
+	import { onMount } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	let activeButtons = $state(new SvelteSet(''));
 	let intervals = {};
 
+	const API_BASE = import.meta.env.VITE_API_BASE;
+
 	function apiMove(body) {
 		// call api to move left forward
-		fetch('http://heat.local:8000/api/move', {
+		fetch(`${API_BASE}/move`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -23,7 +26,7 @@
 
 	function apiCrane(body) {
 		// call api to move left forward
-		fetch('http://heat.local:8000/api/crane', {
+		fetch(`${API_BASE}/crane`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json'
@@ -70,9 +73,8 @@
 	}
 </script>
 
+<h1>Drive & Control</h1>
 <div class="control">
-	<h1>Drive & Control</h1>
-
 	<div class="group">
 		<h2>Rover</h2>
 		<div class="rover">
@@ -203,6 +205,13 @@
 </div>
 
 <style>
+	@media (min-width: 667px) {
+		.control {
+			flex-direction: row !important;
+			gap: 30px;
+		}
+	}
+
 	.btnSlot {
 		display: flex;
 		flex-direction: column;
