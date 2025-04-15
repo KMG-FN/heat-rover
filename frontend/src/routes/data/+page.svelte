@@ -5,6 +5,8 @@
 	let temperature = $state(0);
 	let humidity = $state(0);
 	let pressure = $state(0);
+	let distance = $state(-1);
+	let hdop = $state(-1);
 
 	const API_BASE = import.meta.env.VITE_API_BASE;
 
@@ -37,6 +39,20 @@
 				pressureData = [...pressureData, { x: new Date().toLocaleTimeString(), y: data.pressure }];
 				presChart.data.datasets[0].data = pressureData;
 				presChart.update();
+
+				// distance
+				distance = data.distance;
+				if (distance != -1) {
+					distanceData = [
+						...distanceData,
+						{ x: new Date().toLocaleTimeString(), y: data.distance }
+					];
+					distChart.data.datasets[0].data = distanceData;
+					distChart.update();
+				}
+
+				// hdop
+				hdop = data.hdop;
 			});
 	}
 
@@ -49,7 +65,7 @@
 				return response.json();
 			})
 			.then((data) => {
-				logs = data;
+				logs = data.sort();
 			});
 	}
 
@@ -86,6 +102,9 @@
 
 	let pressureData = [];
 	let presChart = null;
+
+	let distanceData = [];
+	let distChart = null;
 
 	onMount(() => {
 		tempChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
@@ -166,6 +185,32 @@
 			}
 		});
 
+		distChart = new Chart(document.getElementById('distanceChart').getContext('2d'), {
+			type: 'line',
+			data: {
+				datasets: [
+					{
+						label: 'Distance',
+						data: distanceData
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					y: {
+						beginAtZero: true
+					}
+				},
+				animation: false,
+				plugins: {
+					legend: {
+						display: false
+					}
+				}
+			}
+		});
+
 		apiGetSensorData();
 		const interval = setInterval(() => {
 			apiGetSensorData();
@@ -182,23 +227,47 @@
 <h1>Data</h1>
 <div class="data">
 	<div class="group">
-		Temperature: {temperature} °C
+		<div>Temperature: <span class="live-data">{temperature} °C</span></div>
 		<div class="chart">
 			<canvas id="temperatureChart"></canvas>
 		</div>
 	</div>
 
 	<div class="group">
-		Humidity: {humidity} %
+		<div>Humidity: <span class="live-data">{humidity} %</span></div>
 		<div class="chart">
 			<canvas id="humidityChart"></canvas>
 		</div>
 	</div>
 
 	<div class="group">
-		Pressure: {pressure} hPa
+		<div>Pressure: <span class="live-data">{pressure} hPa</span></div>
 		<div class="chart">
 			<canvas id="pressureChart"></canvas>
+		</div>
+	</div>
+
+	<div class="group">
+		<div>
+			Distance:
+			<span class="live-data">
+				{#if distance == -1}
+					<em>No GPS found yet</em>
+				{:else}
+					{distance} m
+				{/if}
+			</span><br />
+			HDOP (Accuracy: lower is better!):
+			<span class="live-data">
+				{#if hdop == -1}
+					<em>No GPS found yet</em>
+				{:else}
+					{hdop}
+				{/if}
+			</span><br />
+		</div>
+		<div class="chart">
+			<canvas id="distanceChart"></canvas>
 		</div>
 	</div>
 
@@ -223,6 +292,11 @@
 </div>
 
 <style>
+	.live-data {
+		font-weight: bold;
+		color: #801d1d;
+	}
+
 	.dropdown {
 		display: flex;
 		flex-direction: row;

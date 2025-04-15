@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+import os
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -9,6 +10,7 @@ import rover
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     asyncio.create_task(rover.save_sensor_data())
+    asyncio.create_task(rover.get_gps_fix())
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -123,3 +125,11 @@ async def getListOfLogs():
 @app.get("/api/downloadLog")
 async def downloadLog(log: str):
     return FileResponse(f"logs/{log}", media_type='text/csv', filename=log.split("/")[-1])
+
+@app.get("/api/shutdown")
+async def shutdown():
+    """
+    Shutdown the rover.
+    """
+    os.system("sudo /usr/sbin/shutdown -h now")
+    return {"message": "Rover is shutting down."}
