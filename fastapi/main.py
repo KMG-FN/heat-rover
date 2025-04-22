@@ -124,7 +124,8 @@ async def getListOfLogs():
 
 @app.get("/api/downloadLog")
 async def downloadLog(log: str):
-    return FileResponse(f"logs/{log}", media_type='text/csv', filename=log.split("/")[-1])
+    path = rover.get_log_path(log)
+    return FileResponse(path, media_type='text/csv', filename=log.split("/")[-1])
 
 @app.get("/api/shutdown")
 async def shutdown():

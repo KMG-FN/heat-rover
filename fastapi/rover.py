@@ -1,13 +1,16 @@
 import asyncio
+import json
 import math
 import os
-import random
 import time
 import RPi.GPIO as GPIO
 import bme280
+from fastapi import HTTPException
 import smbus2
 import adafruit_gps
 import serial
+import glob
+import re
 
 # GPS
 uart = serial.Serial("/dev/serial0", baudrate=9600, timeout=10)
@@ -25,6 +28,9 @@ GPIO.setmode(GPIO.BOARD)
 # BME280 senosor (temperature, humidity, pressure) via I2C
 bme280_address = 0x76 
 bme280_bus = smbus2.SMBus(1)
+bme280_initialized = False
+
+JSON_PATH = "logs/files_to_utc.json"
 
 def init():
   """
@@ -44,8 +50,13 @@ def init():
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.HIGH)
 
-  # Sensors:
-  bme280.load_calibration_params(bme280_bus,bme280_address)
+  # Sensors:  
+  try: 
+    bme280.load_calibration_params(bme280_bus,bme280_address)
+    global bme280_initialized
+    bme280_initialized = True
+  except Exception as e:
+    print(e)
 
   print('initialized')
 
@@ -126,14 +137,33 @@ def get_utc():
 
     utc_formatted = f"{utc.tm_year}-{utc.tm_mon}-{utc.tm_mday}_{utc.tm_hour}:{utc.tm_min}:{utc.tm_sec}"
 
+file_number = 0
+
+def get_file_number():
+    """Find next highest number of csv-files"""
+    csv_files = glob.glob(os.path.join("logs", "*.csv"))
+   
+    biggest_number = 0
+    for file in csv_files:
+      match = re.search(r"(\d+)", os.path.basename(file))
+      if match:
+         x = int(match.group(1))
+         if x > biggest_number:
+            biggest_number = x
+
+    global file_number
+    file_number = biggest_number + 1
+
 async def save_sensor_data():
     """
     Save sensor data to a file.
     """
     
-    get_utc()
+    # get_utc()
+    get_file_number()
+    global file_number
 
-    with open(f"logs/H.E.A.T._{utc_formatted}.csv", "a") as f:
+    with open(f"logs/{file_number}.csv", "a") as f:
         f.write("seconds,humidity,pressure,temperature,distance,hdop (gps accuracy)\n")
 
         seconds = 0
@@ -191,6 +221,24 @@ async def get_gps_fix():
             if len(start_fixes) >= 5:
                 break
         
+        # save gps-utc to json
+        global utc_formatted
+        if utc_formatted == None:
+            get_utc()
+            
+            try: 
+                with open(JSON_PATH, "r") as f:
+                    files_to_utc = json.load(f)
+            except:
+                files_to_utc = {"files_to_utc": []}
+
+            global file_number
+            
+            files_to_utc["files_to_utc"].append({"file": file_number, "utc": utc_formatted})
+
+            with open(JSON_PATH, "w") as f:
+               json.dump(files_to_utc, f, indent=4)
+
     # Calculate average
     global start_lat
     global start_lon
@@ -202,9 +250,24 @@ def get_list_of_logs():
     Get list of log files in the logs directory.
     """
     
+    with open(JSON_PATH, "r") as f:
+       files_to_utc = json.load(f)
+
     logs = []
     for file in os.listdir("logs"):
         if file.endswith(".csv"):
-            logs.append(file)
+            for pair in files_to_utc["files_to_utc"]:
+                if str(pair["file"]) == file.split(".")[0]:
+                    logs.append(pair["utc"] + ".csv")
     
     return logs
+
+def get_log_path(log: str):
+    with open(JSON_PATH, "r") as f:
+        files_to_utc = json.load(f)
+    
+    for pair in files_to_utc["files_to_utc"]:
+       if pair["utc"] == log.split(".")[0]:
+          return "logs/" + str(pair["file"]) + ".csv"
+    
+    raise HTTPException(404)

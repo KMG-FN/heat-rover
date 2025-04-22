@@ -272,7 +272,7 @@
 	</div>
 
 	<div class="group">
-		<h3>Log-Dateien</h3>
+		<h3>Log-Files</h3>
 		<div class="dropdown">
 			<select bind:value={selectedLog}>
 				{#each logs as log}
