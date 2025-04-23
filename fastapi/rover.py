@@ -256,9 +256,13 @@ def get_list_of_logs():
     logs = []
     for file in os.listdir("logs"):
         if file.endswith(".csv"):
+            utc_found = False
             for pair in files_to_utc["files_to_utc"]:
                 if str(pair["file"]) == file.split(".")[0]:
+                    utc_found = True
                     logs.append(pair["utc"] + ".csv")
+            if not utc_found:
+                logs.append(file)
     
     return logs
 
@@ -270,4 +274,4 @@ def get_log_path(log: str):
        if pair["utc"] == log.split(".")[0]:
           return "logs/" + str(pair["file"]) + ".csv"
     
-    raise HTTPException(404)
+    return "logs/" + log
