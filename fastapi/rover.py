@@ -20,8 +20,9 @@ gps.send_command(b"PMTK220,1000")
 
 # Rover Motors
 left = [12, 16]
-right = [18,22]
-vertical = [24,32]
+right = [18, 22]
+vertical = [24, 32]
+grabber = [38, 40]
 
 GPIO.setmode(GPIO.BOARD)
 
@@ -33,78 +34,102 @@ bme280_initialized = False
 JSON_PATH = "logs/files_to_utc.json"
 
 def init():
-  """
-  Inits pins and sensors
-  """
+    """
+    Inits pins and sensors
+    """
 
-  # Pins:
-  for pin in left:
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.HIGH)
+    # Pins:
+    for pin in left:
+        GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+        #GPIO.output(pin, GPIO.LOW)
 
-  for pin in right:
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.HIGH)
+    for pin in right:
+        GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+        #GPIO.output(pin, GPIO.LOW)
 
-  for pin in vertical:
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.HIGH)
+    for pin in vertical:
+        GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+        #GPIO.output(pin, GPIO.LOW)
 
-  # Sensors:  
-  try: 
-    bme280.load_calibration_params(bme280_bus,bme280_address)
-    global bme280_initialized
-    bme280_initialized = True
-  except Exception as e:
-    print(e)
+    for pin in grabber:
+        GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+        #GPIO.output(pin, GPIO.LOW)
 
-  print('initialized')
+    # Sensors:  
+    try: 
+        bme280.load_calibration_params(bme280_bus,bme280_address)
+        bme280_data = bme280.sample(bme280_bus,bme280_address)
+        global bme280_initialized
+        bme280_initialized = True
+    except Exception as e:
+        print(e)
+
+    print('initialized')
 
 
 def moveRoverLeft(action):
-  if action == 'forward':
-      GPIO.output(left[0], GPIO.HIGH)
-      GPIO.output(left[1], GPIO.LOW)
-  elif action == 'backward':
-      GPIO.output(left[0], GPIO.LOW)
-      GPIO.output(left[1], GPIO.HIGH)
-  else:
-      GPIO.output(left[0], GPIO.HIGH)
-      GPIO.output(left[1], GPIO.HIGH)
+    print("left", action)
+    if action == 'forward':
+        GPIO.output(left[0], GPIO.LOW)
+        GPIO.output(left[1], GPIO.HIGH)
+    elif action == 'backward':
+        GPIO.output(left[0], GPIO.HIGH)
+        GPIO.output(left[1], GPIO.LOW)
+    else:
+        GPIO.output(left[0], GPIO.LOW)
+        GPIO.output(left[1], GPIO.LOW)
 
 
 def moveRoverRight(action):
-  if action == 'forward':
-     GPIO.output(right[0], GPIO.HIGH)
-     GPIO.output(right[1], GPIO.LOW)
-  if action == 'backward':
-     GPIO.output(right[0], GPIO.LOW)
-     GPIO.output(right[1], GPIO.HIGH)
-  else:
-     GPIO.output(right[0], GPIO.HIGH)
-     GPIO.output(right[1], GPIO.HIGH)
+    if action == 'forward':
+        print("forward")
+        GPIO.output(right[0], GPIO.LOW)
+        GPIO.output(right[1], GPIO.HIGH)
+    elif action == 'backward':
+        print("backward")
+        GPIO.output(right[0], GPIO.HIGH)
+        GPIO.output(right[1], GPIO.LOW)
+    else:
+        print("stop")
+        GPIO.output(right[0], GPIO.LOW)
+        GPIO.output(right[1], GPIO.LOW)
 
 
 def moveCraneVertical(action):
-  if action == 'up':
-     GPIO.output(vertical[0], GPIO.HIGH)
-     GPIO.output(vertical[1], GPIO.LOW)
-  if action == 'down':
-     GPIO.output(vertical[0], GPIO.LOW)
-     GPIO.output(vertical[1], GPIO.HIGH)
-  else:
-     GPIO.output(vertical[0], GPIO.HIGH)
-     GPIO.output(vertical[1], GPIO.HIGH)
+    print("vertical", action)
+    if action == 'up':
+        GPIO.output(vertical[0], GPIO.LOW)
+        GPIO.output(vertical[1], GPIO.HIGH)
+    elif action == 'down':
+        GPIO.output(vertical[0], GPIO.HIGH)
+        GPIO.output(vertical[1], GPIO.LOW)
+    else:
+        GPIO.output(vertical[0], GPIO.LOW)
+        GPIO.output(vertical[1], GPIO.LOW)
 
 def moveCraneGrabber(action):
-    print("Moving crane grabber", action)
+    if action == "close":
+       GPIO.output(grabber[0], GPIO.LOW)
+       GPIO.output(grabber[1], GPIO.HIGH)
+    elif action == "open":
+       GPIO.output(grabber[0], GPIO.HIGH)
+       GPIO.output(grabber[1], GPIO.LOW)
+    else:
+       GPIO.output(grabber[0], GPIO.LOW)
+       GPIO.output(grabber[1], GPIO.LOW)
 
 
 def get_sensor_data():
-    bme280_data = bme280.sample(bme280_bus,bme280_address)
-    humidity  = bme280_data.humidity
-    pressure  = bme280_data.pressure
-    ambient_temperature = bme280_data.temperature
+    global bme280_initialized
+    
+    humidity = -1
+    pressure = -1
+    ambient_temperature = -1
+    if bme280_initialized:
+        bme280_data = bme280.sample(bme280_bus,bme280_address)
+        humidity  = bme280_data.humidity
+        pressure  = bme280_data.pressure
+        ambient_temperature = bme280_data.temperature
 
     gps.update()
     distance = -1

@@ -25,8 +25,8 @@ Outer Side:
 - 32: Vertical
 - 34 (GND): ---
 - 36: 
-- 38: 
-- 40
+- 38: Grabber open 
+- 40: Grabber close
 
 Inner Side:
 - 1 (3V): BME280-Sensor (VCC)

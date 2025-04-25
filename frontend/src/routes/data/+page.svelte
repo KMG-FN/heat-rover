@@ -21,24 +21,38 @@
 			.then((data) => {
 				// temperature
 				temperature = data.temperature;
-				temperatureData = [
-					...temperatureData,
-					{ x: new Date().toLocaleTimeString(), y: data.temperature }
-				];
-				tempChart.data.datasets[0].data = temperatureData;
-				tempChart.update();
+
+				if (!(data.temperature === data.humidity && data.humidity === data.pressure)) {
+					temperatureData = [
+						...temperatureData,
+						{ x: new Date().toLocaleTimeString(), y: data.temperature }
+					];
+					tempChart.data.datasets[0].data = temperatureData;
+					tempChart.update();
+				}
 
 				// humidity
 				humidity = data.humidity;
-				humidityData = [...humidityData, { x: new Date().toLocaleTimeString(), y: data.humidity }];
-				humChart.data.datasets[0].data = humidityData;
-				humChart.update();
+
+				if (!(data.temperature === data.humidity && data.humidity === data.pressure)) {
+					humidityData = [
+						...humidityData,
+						{ x: new Date().toLocaleTimeString(), y: data.humidity }
+					];
+					humChart.data.datasets[0].data = humidityData;
+					humChart.update();
+				}
 
 				// pressure
 				pressure = data.pressure;
-				pressureData = [...pressureData, { x: new Date().toLocaleTimeString(), y: data.pressure }];
-				presChart.data.datasets[0].data = pressureData;
-				presChart.update();
+				if (!(data.temperature === data.humidity && data.humidity === data.pressure)) {
+					pressureData = [
+						...pressureData,
+						{ x: new Date().toLocaleTimeString(), y: data.pressure }
+					];
+					presChart.data.datasets[0].data = pressureData;
+					presChart.update();
+				}
 
 				// distance
 				distance = data.distance;
@@ -53,6 +67,9 @@
 
 				// hdop
 				hdop = data.hdop;
+			})
+			.catch((error) => {
+				console.log(error);
 			});
 	}
 
@@ -227,21 +244,45 @@
 <h1>Data</h1>
 <div class="data">
 	<div class="group">
-		<div>Temperature: <span class="live-data">{temperature} °C</span></div>
+		<div>
+			Temperature: <span class="live-data">
+				{#if temperature === humidity && humidity === pressure}
+					<em>Sensor error</em>
+				{:else}
+					{temperature} °C
+				{/if}
+			</span>
+		</div>
 		<div class="chart">
 			<canvas id="temperatureChart"></canvas>
 		</div>
 	</div>
 
 	<div class="group">
-		<div>Humidity: <span class="live-data">{humidity} %</span></div>
+		<div>
+			Humidity: <span class="live-data">
+				{#if temperature === humidity && humidity === pressure}
+					<em>Sensor error</em>
+				{:else}
+					{humidity} %
+				{/if}
+			</span>
+		</div>
 		<div class="chart">
 			<canvas id="humidityChart"></canvas>
 		</div>
 	</div>
 
 	<div class="group">
-		<div>Pressure: <span class="live-data">{pressure} hPa</span></div>
+		<div>
+			Pressure: <span class="live-data">
+				{#if temperature === humidity && humidity === pressure}
+					<em>Sensor error</em>
+				{:else}
+					{pressure} hPa
+				{/if}</span
+			>
+		</div>
 		<div class="chart">
 			<canvas id="pressureChart"></canvas>
 		</div>
